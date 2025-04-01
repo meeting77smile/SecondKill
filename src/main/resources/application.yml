@@ -1,0 +1,65 @@
+spring:
+  # thymeleaf配置
+  thymeleaf:
+    # 关闭缓存
+    cache: false
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/seckill
+    # 数据库账号与密码
+    username: root
+    password: 2054865827
+    hikari:
+      # 连接池名
+      pool-name: DateHikariCP
+      # 最小空闲输出
+      minimum-idle: 5
+      # 空闲连接存活最大时间,默认为600000(10分钟)
+      idle-timeout: 1800000
+      # 最大连接数,默认为10
+      maximum-pool-size: 10
+      # 从连接池返回的连接自动提交
+      auto-commit: true
+      # 连接最大存活时间, 0代表永久存活, 默认1800000(30分钟)
+      max-lifetime: 1800000
+      # 连接超时时间，默认为30000(30秒)
+      connection-timeout: 30000
+      # 类似于心跳机制,测试连接是否可用的查询语句（若通过该查询语句能够查询成功，则说明连接没问题）
+      connection-test-query: SELECT 1
+
+  # redis配置
+  data:
+    redis:
+      #（云）服务器地址
+      host: 118.178.229.132
+      #端口
+      port: 6379
+      #数据库默认为第0号库
+      database: 0
+      #超时时间
+      timeout: 10000ms
+      #lettuce连接池的配置
+      lettuce:
+        pool:
+          #最大连接数，默认为8
+          max-active: 8
+          #最大连接阻塞等待时间，默认-1
+          max-wait: 10000ms
+          #最大空闲连接，默认为8
+          max-idle: 200
+          #最小空闲连接，默认为0
+          min-idle: 5
+
+
+# mybatis-plus配置
+mybatis-plus:
+  # 配置Mapper.xml映射文件
+  mapper-locations: classpath*:/mapper/*Mapper.xml
+  # 配置mybatis数据返回类型的别名(默认别名是类名)
+  type-aliases-package: com.meeting_smile.seckilldemo.pojo
+
+# mybatis SQL打印(方法接口所在的包，不是Mapper.xml所在的包)
+logging:
+  level:
+    com.meeting_smile.seckilldemo.mapper: debug

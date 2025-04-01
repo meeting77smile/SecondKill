@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.meeting_smile.seckilldemo.mapper.GoodsMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.meeting_smile.seckilldemo.pojo.Goods">
+        <id column="id" property="id" />
+        <result column="goods_name" property="goodsName" />
+        <result column="goods_title" property="goodsTitle" />
+        <result column="goods_img" property="goodsImg" />
+        <result column="goods_detail" property="goodsDetail" />
+        <result column="goods_price" property="goodsPrice" />
+        <result column="goods_stock" property="goodsStock" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, goods_name, goods_title, goods_img, goods_detail, goods_price, goods_stock
+    </sql>
+
+    <!--获取商品列表-->
+    <!--语法解释："as"是用来给字段或者表取别名的-->
+    <!--ON之后跟的是两张表联合查询的条件-->
+    <!--JOIN是将两张表联合查询-->
+    <!--LEFT JOIN表示只要左边的表有的部分，不管右边有没有，都查询出来，右边的表没有即显示为NULL-->
+    <!--INNER JOIN表示将两个表的公共部分（交集）查询出来-->
+    <!--RIGHT JOIN与LEFT JOIN相反-->
+
+    <!--因此下方语句实现看查询商品表与秒杀商品表中都存在的商品表（任何一方不存在都返回NULL，也相当于查询不到）-->
+    <select id="findGoodsVo" resultType="com.meeting_smile.seckilldemo.valueobject.GoodsVo">
+        SELECT
+            g.id,
+            g.goods_name,
+            g.goods_title,
+            g.goods_img,
+            g.goods_detail,
+            g.goods_price,
+            g.goods_stock,
+            sg.seckill_price,
+            sg.stock_count,
+            sg.start_date,
+            sg.end_date
+        FROM
+            t_goods g
+                LEFT JOIN t_seckill_goods as sg ON g.id=sg.goods_id
+    </select>
+
+    <!--获取商品详情-->
+    <select id="findGoodsVoByGoodsId" resultType="com.meeting_smile.seckilldemo.valueobject.GoodsVo">
+    SELECT
+    g.id,
+    g.goods_name,
+    g.goods_title,
+    g.goods_img,
+    g.goods_detail,
+    g.goods_price,
+    g.goods_stock,
+    sg.seckill_price,
+    sg.stock_count,
+    sg.start_date,
+    sg.end_date
+    FROM
+    t_goods g
+    LEFT JOIN t_seckill_goods as sg ON g.id=sg.goods_id
+    WHERE
+    g.id=#{goodsId}
+    </select>
+</mapper>
+
