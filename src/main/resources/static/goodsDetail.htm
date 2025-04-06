@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>商品详情</title>
+    <!-- jquery -->
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <!-- bootstrap -->
+    <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.min.css"/>
+    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+    <!-- layer -->
+    <script type="text/javascript" src="/layer/layer.js"></script>
+    <!-- common.js -->
+    <script type="text/javascript" src="/js/common.js"></script>
+</head>
+<body>
+<div class="panel panel-default">
+    <div class="panel-heading">秒杀商品详情</div>
+    <div class="panel-body">
+        <span id="userTip"> 您还没有登录，请登陆后再操作<br/></span>
+        <span>没有收货地址的提示。。。</span>
+    </div>
+    <table class="table" id="goods">
+        <tr>
+            <td>商品名称</td>
+            <td colspan="3" id="goodsName"></td>
+        </tr>
+        <tr>
+            <td>商品图片</td>
+            <td colspan="3"><img id="goodsImg" width="200" height="200"/></td>
+        </tr>
+        <tr>
+            <td>秒杀开始时间</td>
+            <td id="startTime"></td>
+            <td>
+                <input type="hidden" id="remainSeconds"> <!--无论秒杀状态如何，都能获取到倒计时-->
+<!--                <span th:if="${secKillStatus eq 0}">秒杀倒计时: <span id="countDown" th:text="${remainSeconds}"></span>秒</span>-->
+<!--                <span th:if="${secKillStatus eq 1}">秒杀进行中</span>-->
+<!--                <span th:if="${secKillStatus eq 2}">秒杀已结束</span>-->
+                    <span id="seckillTip"></span>
+            </td>
+            <td>
+                <!--由于要实现跳转等功能，故使用表单按钮-->
+<!--                <form id="secKillForm" method="post" action="/seckill/doSeckill">-->
+<!--                    <input type="hidden" name="goodsId" id="goodsId"> &lt;!&ndash;用于传递商品id&ndash;&gt;-->
+<!--                    <button class="btn btn-primary btn-block" type="submit" id="buyButton">立即秒杀</button>-->
+<!--                </form>-->
+                <div class="row">
+                    <div class="form-inline">
+                        <img id="captchaImg" width="130" height="32" onclick="refreshCaptcha()" style="display:none">
+                        <input id="captcha" class="form-control" style="display:none">
+                        <button class="btn btn-primary" type="button" id="buyButton" onclick="getSeckillPath()">立即秒杀
+                            <input type="hidden" name="goodsId" id="goodsId">
+                        </button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>商品原价</td>
+            <td colspan="3" id="goodsPrice"></td>
+        </tr>
+        <tr>
+            <td>秒杀价</td>
+            <td colspan="3" id="seckillPrice"></td>
+        </tr>
+        <tr>
+            <td>库存数量</td>
+            <td colspan="3" id="stockCount"></td>
+        </tr>
+    </table>
+</div>
+</body>
+<script>
+    $(function (){//立即执行函数的写法
+        //countDown();//从当前从后端获得的倒计时开始进行自减并显示在前端，直至减为0（秒杀开始）
+        getDetails();
+    });
+
+    function refreshCaptcha(){
+        //当点击验证码图片时会进行刷新(将captchaImg的路径进行替换）
+        //"&time="+new Date() ：加上时间戳，确保拿到的验证码图片是最新的
+        $("#captchaImg").attr("src","/seckill/captcha?goodsId="+$("#goodsId").val()+"&time="+new Date());
+    }
+
+    function getSeckillPath(){
+        var goodsId = $("#goodsId").val();//获取商品id
+        var captcha = $("#captcha").val();//获取用户输入的验证码内容
+        g_showLoading();//加载动画
+        $.ajax({
+            url:"/seckill/path",
+            type:"GET",
+            data:{
+                goodsId: goodsId,
+                captcha: captcha
+            },
+            success:function (data){
+                if (data.code == 200){//请求成功，用真正的秒杀地址去进行秒杀
+                    var path = data.obj;
+                    doSeckill(path);
+                }else{//请求失败，返回错误信息
+                    layer.msg(data.message);
+                }
+            },
+            error:function (){
+                layer.msg("客户端请求错误");
+            }
+        })
+    }
+
+    function doSeckill(path) {
+        $.ajax({
+            url:'/seckill/'+path+'/doSeckill',
+            type:'POST',
+            data:{
+                goodsId:$("#goodsId").val()
+            },
+            success:function(data) {
+                if(data.code==200) {
+                    //window.location.href="orderDetail.htm?orderId="+data.obj.id;
+                    getResult($("#goodsId").val());//通过goodsId进行查询
+                } else {
+                    layer.msg(data.message);
+                }
+            },
+            error:function() {
+                layer.msg("客户端请求错误");
+            }
+        })
+    }
+
+    function getDetails(){
+        var goodsId = g_getQueryString("goodsId");
+        $.ajax({
+            url:'/goods/detail/'+goodsId,
+            type:'GET',
+            success:function (data){
+                if(data.code == 200){
+                    render(data.obj);
+                }else{
+                    layer.msg("客户端请求出错");
+                }
+            },
+            error:function (){
+                layer.msg("客户端请求出错");
+            }
+        })
+    }
+
+    function getResult(goodsId){
+        g_showLoading();//添加加载动画
+        $.ajax({
+            url:"/seckill/result",
+            type:"GET",
+            data: {
+                goodsId:goodsId,
+            },
+            success:function (data){
+                if(data.code==200){
+                    var result = data.obj;
+                    if(result < 0){
+                        layer.msg("秒杀失败~");
+                    }else if(result==0){
+                        //排队中，进行客户端轮询操作（周期性地检查各种输入源以检测是否有待处理的数据或请求）
+                        setTimeout(function (){
+                            getResult(goodsId);
+                            //定义轮询时间为50
+                        },50)
+                    }else{//秒杀成功
+                        layer.confirm("秒杀成功！是否查看订单？",{btn:["确定","取消"]},
+                            function (){//查看订单
+                                window.location.href="/orderDetail.htm?orderId="+result;
+                            },
+                            function (){//取消查看订单
+                                layer.close();
+                            })
+                    }
+                }
+            },
+            error:function (){
+                layer.msg ("客户端请求错误");
+            }
+        })
+    }
+
+    function  render(detail){
+        var user = detail.user;
+        var goods = detail.goodsVo;
+        var  remainSeconds = detail.remainSeconds;
+        if(user){//如果用户存在
+            $("userTip").hide();//隐藏提示用户未登录的信息
+        }
+        //为可变数据进行赋值
+        $("#goodsName").text(goods.goodsName);
+        $("#goodsImg").attr("src",goods.goodsImg);
+        $("#startTime").text(new Date(goods.startDate).format("yyyy-MM-dd HH:mm:ss"));
+        $("#goodsId").val(goods.id);
+        $("#goodsPrice").text(goods.goodsPrice);
+        $("#seckillPrice").text(goods.seckillPrice);
+        $("#stockCount").text(goods.stockCount);
+        $("#remainSeconds").val(remainSeconds);
+        countDown();
+    }
+
+    function countDown(){
+        //注意别漏了#
+        var remainSeconds = $("#remainSeconds").val();//从remainSeconds的input中获取从后端拿到的倒计时
+        var timeout;//定时器
+        if(remainSeconds>0){//秒杀还未开始
+            $("#buyButton").attr("disabled",true);//将秒杀按钮置灰（attr() 方法设置或返回被选元素的属性值）
+            $("#seckillTip").html("秒杀倒计时："+remainSeconds+"秒");
+            //如果倒计时大于0，就设置timeout
+            timeout = setTimeout(function (){
+                //$("#countDown").text(remainSeconds-1);
+                $("#remainSeconds").val(remainSeconds-1);//remainSeconds自减
+                countDown();//递归进行
+            },1000);
+        }else if(remainSeconds==0){//秒杀进行中
+            $("#buyButton").attr("disabled",false);//取消秒杀按钮的置灰
+            if(timeout){
+                clearTimeout(timeout);//清除倒计时
+            }
+            $("#seckillTip").html("秒杀进行中")
+            //刷新验证码图片（"&time="+new Date() ：加上时间戳，确保拿到的验证码图片是最新的）
+            $("#captchaImg").attr("src","/seckill/captcha?goodsId="+$("#goodsId").val()+"&time="+new Date());
+            //秒杀进行中，显示验证码输入框及图片
+            $("#captchaImg").show();
+            $("#captcha").show();
+        }else{
+            $("#buyButton").attr("disabled",true);//将秒杀按钮置灰
+            $("#seckillTip").html("秒杀已经结束");
+            //秒杀结束，隐藏验证码输入框及图片
+            $("#captchaImg").hide();
+            $("#captcha").hide();
+        }
+    }
+</script>
+</html>

@@ -33,13 +33,7 @@ public class UserArgumentResolve implements HandlerMethodArgumentResolver {
     //代替了GoodsController中判断user是否合法的功能
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-        //通过webRequest拿到request和response
-        HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
-        HttpServletResponse response = webRequest.getNativeResponse(HttpServletResponse.class);
-        String ticket = CookieUtil.getCookieValue(request,"userTicket");
-        if(StringUtils.isEmpty(ticket)){//如果ticket为空
-            return null;
-        }
-        return userService.getUserByCookie(ticket,request,response);
+        //从线程ThreadLocal<User>中直接获取用户
+        return UserContext.getUser();
     }
 }

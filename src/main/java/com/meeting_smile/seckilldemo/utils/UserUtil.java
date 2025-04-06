@@ -84,12 +84,12 @@ public class UserUtil {
             ObjectMapper mapper = new ObjectMapper();
             RespBean respBean = mapper.readValue(response,RespBean.class);
             String userTicket = (String) respBean.getObj();//获取到userTicket
-            System.out.println("create userTicket :"+userTicket);
+            //System.out.println("create userTicket :"+userTicket);
             String row = user.getId()+","+userTicket;//设置"config.txt"文件中每一行的内容
             raf.seek(raf.length());//设置长度
             raf.write(row.getBytes());
             raf.write("\r\n".getBytes());//换行
-            System.out.println("write to file :"+user.getId());
+            //System.out.println("write to file :"+user.getId());
         }
         raf.close();
         System.out.println("over");
